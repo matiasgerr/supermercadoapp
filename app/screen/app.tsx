@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Selector from '../components/Selector';
-import PanelGestion from '../components/Gestion';
+import Selector from '../components/Home';
+import PanelGestion from './dashboard/Dashboard';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 
 function App() {
@@ -18,34 +18,16 @@ function App() {
     localStorage.setItem('mis-datos-compras', JSON.stringify(comercios));
   }, [comercios]);
 
-  // 2. ESTADO DE NAVEGACIÓN: Para saber qué pantalla mostrar
-  const [vistaActual, setVistaActual] = useState('inicio'); // Puede ser 'inicio' o 'gestion'
+  // 2. ESTADO DE NAVEGACIÓN: Ya no necesitamos estados manuales si usamos rutas
   
-  // 3. ESTADO DE CATEGORÍA: Para saber si el usuario hizo clic en "Farmacia", "Super", etc.
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
-
-  // 4. EFECTO: Cada vez que 'comercios' cambie, lo guardamos en LocalStorage automáticamente
-  useEffect(() => {
-    localStorage.setItem('mis-datos-compras', JSON.stringify(comercios));
-  }, [comercios]);
-
   // Route wrapper that navigates and passes props
   const InicioRoute: React.FC = () => {
-    const navigate = useNavigate();
-    return (
-      <Selector
-        setCategoria={(c) => setCategoriaSeleccionada(c)}
-        setVista={(v) => { if (v === 'gestion') navigate('/gestion'); }}
-      />
-    );
+    return <Selector />;
   };
 
   const GestionRoute: React.FC = () => {
-    const navigate = useNavigate();
     return (
       <PanelGestion
-        categoria={categoriaSeleccionada}
-        setCategoria={(c) => setCategoriaSeleccionada(c)}
         comercios={comercios}
         setComercios={setComercios}
       />
@@ -58,7 +40,7 @@ function App() {
         <Routes>
           <Route path="/" element={<InicioRoute />} />
           <Route path="/inicio" element={<InicioRoute />} />
-          <Route path="/gestion" element={<GestionRoute />} />
+          <Route path="/gestion/:tipo" element={<GestionRoute />} />
         </Routes>
       </div>
     </BrowserRouter>
