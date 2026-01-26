@@ -28,7 +28,7 @@ function App() {
           <Route path="/" element={<Selector />} />
           <Route path="/inicio" element={<Selector />} />
           <Route 
-            path="/gestion/:tipo" 
+            path="/gestion" 
             element={<PanelGestionWrapper comercios={comercios} setComercios={setComercios} />} 
           />
         </Routes>
