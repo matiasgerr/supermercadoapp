@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../lib/superbaseClient"; // Asegúrate de que esta ruta sea correcta
 
+// Definición de tipos basada en nuestra estructura de base de datos
 type Producto = {
+    id?: number;
     nombre: string;
     precio: number;
     cantidad: number;
@@ -11,19 +14,19 @@ type Producto = {
 type Comercio = {
     id: number;
     nombre: string;
-    categoria: string;
+    categoria_id: number;
     productos: Producto[];
 };
 
 type PanelGestionProps = {
-    categoria: string;
-    setCategoria: (c: string) => void;
-    comercios: Comercio[]; // Ya no es opcional
+    comercios: Comercio[];
     setComercios: React.Dispatch<React.SetStateAction<Comercio[]>>;
 };
 
-const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, comercios, setComercios }) => {
+const PanelGestion: React.FC<PanelGestionProps> = ({ comercios, setComercios }) => {
     const navigate = useNavigate();
+    const { tipo } = useParams(); // Obtenemos la categoría de la URL
+    
     const [nombreNuevoLocal, setNombreNuevoLocal] = useState("");
     const [localSeleccionadoId, setLocalSeleccionadoId] = useState<number | null>(null);
     const [nuevoProducto, setNuevoProducto] = useState<Producto>({
@@ -32,43 +35,78 @@ const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, co
         cantidad: 0,
         stock: 0,
     });
-    // 1. Lógica para agregar Local
-    const agregarLocal = () => {
-        if (!nombreNuevoLocal.trim()) return;
 
-        const nuevoLocal: Comercio = {
-            id: Date.now(), // ID único simple
-            nombre: nombreNuevoLocal,
-            categoria: categoria, // Se guarda en la categoría donde estás parado
-            productos: []
-        };
+    // --- LÓGICA DE CARGA (READ) ---
+    const traerDatos = async () => {
+        if (!tipo) return;
 
-        setComercios([...comercios, nuevoLocal]);
-        setNombreNuevoLocal(""); // Limpiamos el input
+        // 1. Buscamos el ID de la categoría actual por su nombre (slug)
+        const { data: catData } = await supabase
+            .from('categorias')
+            .select('id')
+            .ilike('nombre', tipo)
+            .single();
+
+        if (catData) {
+            // 2. Traemos comercios y sus productos relacionados en una sola consulta
+            const { data, error } = await supabase
+                .from('comercios')
+                .select('*, productos(*)')
+                .eq('categoria_id', catData.id);
+
+            if (!error && data) {
+                setComercios(data);
+            }
+        }
     };
 
-    // 2. Filtramos comercios para mostrar solo los de esta categoría
-    const comerciosFiltrados = comercios.filter(c => c.categoria === categoria);
+    useEffect(() => {
+        traerDatos();
+    }, [tipo]); // Se recarga cuando cambias de categoría en el sidebar
 
-    // 3. Obtenemos el local que el usuario clickeó para ver sus productos
-    const localActivo = comercios.find(c => c.id === localSeleccionadoId);
+    // --- LÓGICA DE LOCALES (CREATE) ---
+    const agregarLocal = async () => {
+        if (!nombreNuevoLocal.trim() || !tipo) return;
 
+        const { data: cat } = await supabase
+            .from('categorias')
+            .select('id')
+            .ilike('nombre', tipo)
+            .single();
 
-    //manejo de la logica para agregar productos
-    const manejarAgregarProducto = () => {
-        if (!localSeleccionadoId || !nuevoProducto.nombre.trim()) return;
-        const listaActualizada = comercios.map((comercio) => {
-            if (comercio.id === localSeleccionadoId) {
-                return {
-                    ...comercio,
-                    productos: [...comercio.productos, nuevoProducto],
-                };
+        if (cat) {
+            const { error } = await supabase
+                .from('comercios')
+                .insert([{ nombre: nombreNuevoLocal, categoria_id: cat.id }]);
+
+            if (!error) {
+                setNombreNuevoLocal("");
+                await traerDatos(); // Recargamos la lista desde la nube
             }
-            return comercio;
-        });
-        setComercios(listaActualizada);
-        setNuevoProducto({ nombre: "", precio: 0, cantidad: 0, stock: 0 }); // Limpiar el formulario
-    }
+        }
+    };
+
+    // --- LÓGICA DE PRODUCTOS (CREATE) ---
+    const manejarAgregarProducto = async () => {
+        if (!localSeleccionadoId || !nuevoProducto.nombre.trim()) return;
+
+        const { error } = await supabase
+            .from('productos')
+            .insert([{
+                comercio_id: localSeleccionadoId,
+                nombre: nuevoProducto.nombre,
+                precio: nuevoProducto.precio,
+                cantidad: nuevoProducto.cantidad,
+                stock: nuevoProducto.stock
+            }]);
+
+        if (!error) {
+            setNuevoProducto({ nombre: "", precio: 0, cantidad: 0, stock: 0 });
+            await traerDatos(); // Actualizamos la tabla para ver el nuevo producto
+        }
+    };
+
+    const localActivo = comercios.find(c => c.id === localSeleccionadoId);
 
     return (
         <div className="flex h-screen bg-white">
@@ -78,37 +116,32 @@ const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, co
                 {['Farmacia', 'Supermercado', 'Supermercado Mayorista'].map(cat => (
                     <button
                         key={cat}
-                        onClick={() => { setCategoria(cat); setLocalSeleccionadoId(null); }}
-                        className={`text-left p-3 rounded-lg transition ${categoria === cat ? 'bg-blue-600' : 'hover:bg-gray-800'}`}
+                        onClick={() => {
+                            setLocalSeleccionadoId(null);
+                            navigate(`/gestion/${cat.toLowerCase()}`); // Cambiamos la URL
+                        }}
+                        className={`text-left p-3 rounded-lg transition capitalize ${tipo === cat.toLowerCase() ? 'bg-blue-600' : 'hover:bg-gray-800'}`}
                     >
                         {cat}
                     </button>
                 ))}
 
-                {/* LISTADO DE LOCALES EN EL SIDEBAR */}
                 <div className="mt-4 flex flex-col gap-2">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase">Tus Locales</h3>
-                    {comerciosFiltrados.map(local => (
-                        <div key={local.id} className="flex items-center justify-between group">
-                            <button
-                                onClick={() => setLocalSeleccionadoId(local.id)}
-                                className={`flex-1 text-sm p-2 rounded ${localSeleccionadoId === local.id ? 'bg-gray-700 font-bold' : 'hover:bg-gray-800'}`}
-                            >
-                                {local.nombre}
-                            </button>
-                            <button
-                                className="opacity-0 group-hover:opacity-100 bg-green-600 p-1 text-xs rounded ml-1"
-                                title="Añadir producto"
-                            >
-                                +
-                            </button>
-                        </div>
+                    {comercios.map(local => (
+                        <button
+                            key={local.id}
+                            onClick={() => setLocalSeleccionadoId(local.id)}
+                            className={`text-left text-sm p-2 rounded transition ${localSeleccionadoId === local.id ? 'bg-gray-700 font-bold' : 'hover:bg-gray-800'}`}
+                        >
+                            {local.nombre}
+                        </button>
                     ))}
                 </div>
 
                 <button
                     onClick={() => navigate('/')}
-                    className="mt-auto w-full bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-lg transition text-center"
+                    className="mt-auto w-full bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-center"
                 >
                     Volver al Inicio
                 </button>
@@ -116,20 +149,20 @@ const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, co
 
             {/* Área Principal */}
             <div className="flex-1 p-8 overflow-y-auto">
-                <h2 className="text-3xl font-bold text-gray-800 mb-6">{categoria}</h2>
+                <h2 className="text-3xl font-bold text-gray-800 mb-6 capitalize">Gestión de {tipo}</h2>
 
-                {/* Formulario de Registro */}
+                {/* Formulario de Registro de Local */}
                 <div className="bg-gray-50 p-6 rounded-xl mb-8 border border-gray-200">
-                    <h3 className="font-semibold mb-4 ">Registrar Nuevo Local en {categoria}</h3>
+                    <h3 className="font-semibold mb-4 text-black">Registrar Nuevo Local en {tipo}</h3>
                     <div className="flex gap-4">
                         <input
                             type="text"
                             value={nombreNuevoLocal}
                             onChange={(e) => setNombreNuevoLocal(e.target.value)}
                             placeholder="Ej: Farmacia del Sol"
-                            className="flex-1 p-2 border rounded text-[#000]"
+                            className="flex-1 p-2 border rounded text-black font-medium"
                         />
-                        <button onClick={agregarLocal} className="bg-blue-600 text-white px-6 py-2 rounded">
+                        <button onClick={agregarLocal} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">
                             Agregar Local
                         </button>
                     </div>
@@ -138,40 +171,40 @@ const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, co
                 {/* Tabla de Productos */}
                 <div className="bg-white rounded-lg shadow border border-gray-100">
                     <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 className="font-bold">
+                        <h3 className="font-bold text-black">
                             {localActivo ? `Productos de: ${localActivo.nombre}` : 'Selecciona un local'}
                         </h3>
                     </div>
 
-                    {/* FORMULARIO DE PRODUCTO (Aparece solo si hay un local seleccionado) */}
+                    {/* Formulario de Producto */}
                     {localActivo && (
                         <div className="p-4 bg-green-50 border-b flex flex-wrap gap-2">
                             <input
                                 placeholder="Nombre Producto"
                                 value={nuevoProducto.nombre}
                                 onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })}
-                                className="flex-1 p-2 border rounded"
+                                className="flex-1 p-2 border rounded text-black"
                             />
                             <input
                                 type="number"
                                 placeholder="Precio"
                                 value={nuevoProducto.precio || ""}
                                 onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: Number(e.target.value) })}
-                                className="w-24 p-2 border rounded"
+                                className="w-24 p-2 border rounded text-black"
                             />
                             <input
                                 type="number"
-                                placeholder="Cantidad"
+                                placeholder="Cant."
                                 value={nuevoProducto.cantidad || ""}
                                 onChange={(e) => setNuevoProducto({ ...nuevoProducto, cantidad: Number(e.target.value) })}
-                                className="w-24 p-2 border rounded"
+                                className="w-20 p-2 border rounded text-black"
                             />
                             <input
                                 type="number"
                                 placeholder="Stock"
                                 value={nuevoProducto.stock || ""}
                                 onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: Number(e.target.value) })}
-                                className="w-24 p-2 border rounded"
+                                className="w-20 p-2 border rounded text-black"
                             />
                             <button
                                 onClick={manejarAgregarProducto}
@@ -192,10 +225,10 @@ const PanelGestion: React.FC<PanelGestionProps> = ({ categoria, setCategoria, co
                             </tr>
                         </thead>
                         <tbody>
-                            {localActivo && localActivo.productos.length > 0 ? (
+                            {localActivo && localActivo.productos && localActivo.productos.length > 0 ? (
                                 localActivo.productos.map((prod, i) => (
                                     <tr key={i} className="hover:bg-gray-50 text-black">
-                                        <td className="p-3 border">{prod.nombre}</td>
+                                        <td className="p-3 border font-medium">{prod.nombre}</td>
                                         <td className="p-3 border">${prod.precio}</td>
                                         <td className="p-3 border">{prod.cantidad}</td>
                                         <td className="p-3 border">{prod.stock}</td>
