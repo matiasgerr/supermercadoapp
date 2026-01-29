@@ -6,7 +6,7 @@ const Selector: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-      <h1 className="text-2xl font-bold mb-8">¿Qué consulta desea realizar?</h1>
+      <h1 className="text-2xl font-bold mb-10 dark:text-balck text-black ">¿Qué consulta desea realizar?</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl shadow">
         
           <button 
