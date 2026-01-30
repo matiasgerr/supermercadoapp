@@ -10,6 +10,38 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+const hasDataArray = (value: unknown): value is { data: unknown[] } => {
+  if (!value || typeof value !== "object") return false;
+  if (!("data" in value)) return false;
+  const data = (value as { data: unknown }).data;
+  return Array.isArray(data);
+};
+
+export async function getCategorias() {
+  const headers: HeadersInit = {
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${supabaseAnonKey}`,
+    Accept: "application/json",
+  };
+
+  const base = supabaseUrl.replace(/\/+$/, "");
+  const restBase = base.endsWith("/rest/v1") ? base : `${base}/rest/v1`;
+  const url = `${restBase}/categorias?select=*&order=id.asc`;
+
+  try {
+    const res = await fetch(url, { headers });
+    if (!res.ok) return [];
+
+    const json = await res.json();
+    if (Array.isArray(json)) return json;
+    if (hasDataArray(json)) return json.data;
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
 // Función para obtener comercios filtrados por categoría (incluyendo sus productos)
 export async function getComerciosPorCategoria(categoriaNombre: string) {
   try {

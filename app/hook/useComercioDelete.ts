@@ -33,9 +33,9 @@ export const useDeleteComercio = () => {
 
             return true; // Éxito
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error al eliminar:", err);
-            setError(err.message);
+            setError(err instanceof Error ? err.message : String(err));
             return false; // Falló
         } finally {
             setLoading(false);

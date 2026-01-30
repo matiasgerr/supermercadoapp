@@ -7,5 +7,5 @@ export type CategoriaType = {
 // Lo que vos querías hacer (Data englobada)
 export type RegistroCompleto = {
   categoria: CategoriaType;
-  comercios: any[];
+  comercios: unknown[];
 };
