@@ -4,14 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Selector from './components/Home';
 import PanelGestion from './screen/dashboard/Dashboard';
+import type { Comercio } from './type/gestion';
+import PanelComparar from './screen/comparar/priceComparation';
 
 function App() {
   // 1. ESTADO DE LOS DATOS: Aquí se guardan todos tus supermercados y productos
-  const [comercios, setComercios] = useState<any[]>(() => {
+  const [comercios, setComercios] = useState<Comercio[]>(() => {
     // Intentamos buscar si ya había algo guardado en la "mochila" del navegador
     if (typeof window !== 'undefined') {
         const guardado = localStorage.getItem('mis-datos-compras');
-        return guardado ? JSON.parse(guardado) : [];
+        if (!guardado) return [];
+        try {
+          return JSON.parse(guardado) as Comercio[];
+        } catch {
+          return [];
+        }
     }
     return [];
   });
@@ -31,6 +38,10 @@ function App() {
             path="/gestion" 
             element={<PanelGestionWrapper comercios={comercios} setComercios={setComercios} />} 
           />
+          <Route 
+            path="/comparar" 
+            element={<PanelCompararWrapper />} 
+          />
         </Routes>
       </div>
     </BrowserRouter>
@@ -38,8 +49,16 @@ function App() {
 }
 
 // Wrapper component to prevent re-mounting of PanelGestion on every render
-const PanelGestionWrapper = ({ comercios, setComercios }: { comercios: any[], setComercios: React.Dispatch<React.SetStateAction<any[]>> }) => {
+const PanelGestionWrapper = ({
+  comercios,
+  setComercios,
+}: {
+  comercios: Comercio[];
+  setComercios: React.Dispatch<React.SetStateAction<Comercio[]>>;
+}) => {
     return <PanelGestion comercios={comercios} setComercios={setComercios} />;
 };
-
+const PanelCompararWrapper = () => {
+    return <PanelComparar />;
+};
 export default App;
