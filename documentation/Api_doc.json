@@ -1,0 +1,39 @@
+{
+	"info": {
+		"name": "Gestion-to-Market",
+		"description": "API para la gestión de categorías, comercios y productos.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Categorias",
+			"item": [
+				{ "name": "Listar todas", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/categorias" } } },
+				{ "name": "Obtener una", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/categorias/:id" } } },
+				{ "name": "Crear", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/categorias" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Nombre de la categoría\"\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Actualizar", "request": { "method": "PUT", "url": { "raw": "{{baseUrl}}/categorias/:id" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Nuevo nombre\"\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Eliminar", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/categorias/:id" } } }
+			]
+		},
+		{
+			"name": "Comercios",
+			"item": [
+				{ "name": "Listar todos", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/comercios" } } },
+				{ "name": "Obtener uno", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/comercios/:id" } } },
+				{ "name": "Crear", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/comercios" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Nombre del comercio\",\n  \"direccion\": \"Calle Falsa 123\"\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Actualizar", "request": { "method": "PUT", "url": { "raw": "{{baseUrl}}/comercios/:id" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Nombre editado\",\n  \"direccion\": \"Nueva dirección\"\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Eliminar", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/comercios/:id" } } }
+			]
+		},
+		{
+			"name": "Productos",
+			"item": [
+				{ "name": "Listar todos", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/productos" } } },
+				{ "name": "Obtener uno", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/productos/:id" } } },
+				{ "name": "Crear", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/productos" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Producto ejemplo\",\n  \"precio\": 1500,\n  \"stock\": 10,\n  \"categoriaId\": 1\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Actualizar", "request": { "method": "PUT", "url": { "raw": "{{baseUrl}}/productos/:id" }, "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Producto editado\",\n  \"precio\": 1600\n}", "options": { "raw": { "language": "json" } } } } },
+				{ "name": "Eliminar", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/productos/:id" } } }
+			]
+		}
+	]
+}
