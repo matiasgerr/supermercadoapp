@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from './superbaseClient';
+import { requireSupabase } from './superbaseClient';
 
 // Este es un "Custom Hook". 
 // Piensa en él como una herramienta que puedes enchufar en cualquier componente
@@ -24,7 +24,8 @@ export const useDeleteComercio = () => {
 
             // 2. Llamada a Supabase
             // "Borra de la tabla 'comercios' donde la columna 'id' sea igual al id que te paso"
-            const { error: supabaseError } = await supabase
+            const client = requireSupabase();
+            const { error: supabaseError } = await client
                 .from('comercios')
                 .delete()
                 .eq('id', id);

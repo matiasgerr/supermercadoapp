@@ -1,14 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Reemplaza estos valores con los que están en Settings -> API de tu proyecto en Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPERBASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPERBASE_CLIENT_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPERBASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPERBASE_CLIENT_KEY;
+const missingSupabaseEnvMessage =
+  "Missing Supabase environment variables. Please check your .env.local file and ensure NEXT_PUBLIC_SUPERBASE_URL and NEXT_PUBLIC_SUPERBASE_CLIENT_KEY are set.";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables. Please check your .env.local file and ensure NEXT_PUBLIC_SUPERBASE_URL and NEXT_PUBLIC_SUPERBASE_CLIENT_KEY are set.");
+export const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
+
+export function requireSupabase() {
+  if (!supabase) {
+    throw new Error(missingSupabaseEnvMessage);
+  }
+
+  return supabase;
 }
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const hasDataArray = (value: unknown): value is { data: unknown[] } => {
   if (!value || typeof value !== "object") return false;
@@ -18,6 +27,8 @@ const hasDataArray = (value: unknown): value is { data: unknown[] } => {
 };
 
 export async function getCategorias() {
+  if (!supabaseUrl || !supabaseAnonKey) return [];
+
   const headers: HeadersInit = {
     apikey: supabaseAnonKey,
     Authorization: `Bearer ${supabaseAnonKey}`,
@@ -45,8 +56,10 @@ export async function getCategorias() {
 // Función para obtener comercios filtrados por categoría (incluyendo sus productos)
 export async function getComerciosPorCategoria(categoriaNombre: string) {
   try {
+    const client = requireSupabase();
+
     // 1. Buscamos el ID de la categoría
-    const { data: catData, error: catError } = await supabase
+    const { data: catData, error: catError } = await client
       .from('categorias')
       .select('id')
       .ilike('nombre', categoriaNombre)
@@ -58,7 +71,7 @@ export async function getComerciosPorCategoria(categoriaNombre: string) {
     }
 
     // 2. Traemos comercios y productos
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('comercios')
       .select('*, productos(*)')
       .eq('categoria_id', catData.id);
@@ -77,7 +90,8 @@ export async function getComerciosPorCategoria(categoriaNombre: string) {
 
 // Función básica para obtener todos los comercios (sin filtrar)
 export async function getComercios() {
-  const { data, error } = await supabase
+  const client = requireSupabase();
+  const { data, error } = await client
     .from('comercios')
     .select('*');
     

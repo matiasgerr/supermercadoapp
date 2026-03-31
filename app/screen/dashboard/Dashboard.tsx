@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { getCategorias, supabase } from "../../hook/superbaseClient";
+import { getCategorias, requireSupabase } from "../../hook/superbaseClient";
 import { useDeleteComercio } from "../../hook/useComercioDelete";
 import { mdiDelete, mdiPencil } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -66,7 +66,8 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
   // --- TRAER DATOS DE COMERCIOS ---
   const traerDatos = useCallback(async () => {
     if (!categoriaSeleccionada) return;
-    const { data, error } = await supabase
+    const client = requireSupabase();
+    const { data, error } = await client
       .from("comercios")
       .select("*, productos(*)")
       .eq("categoria_id", categoriaSeleccionada.id);
@@ -91,7 +92,8 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
       if (!categoriaSeleccionada) return;
 
       // Hacemos un Join para traer solo productos de comercios que pertenecen a esta categoría
-      const { data, error } = await supabase
+      const client = requireSupabase();
+      const { data, error } = await client
         .from("productos")
         .select(`
           nombre,
@@ -111,7 +113,8 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
   // --- MANEJADORES DE ACCIONES ---
   const agregarLocal = async () => {
     if (!nombreNuevoLocal.trim() || !categoriaSeleccionada) return;
-    const { error } = await supabase.from("comercios").insert([
+    const client = requireSupabase();
+    const { error } = await client.from("comercios").insert([
       { nombre: nombreNuevoLocal, categoria_id: categoriaSeleccionada.id },
     ]);
     if (!error) {
@@ -122,7 +125,8 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
 
   const manejarAgregarProducto = async () => {
     if (!localSeleccionadoId || !nuevoProducto.nombre.trim()) return;
-    const { error } = await supabase.from("productos").insert([
+    const client = requireSupabase();
+    const { error } = await client.from("productos").insert([
       {
         comercio_id: localSeleccionadoId,
         nombre: nuevoProducto.nombre,
@@ -139,7 +143,8 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
 
   const actualizarComercio = async () => {
     if (!comercioAEditar || !nuevoNombreComercio.trim()) return;
-    const { error } = await supabase
+    const client = requireSupabase();
+    const { error } = await client
       .from("comercios")
       .update({ nombre: nuevoNombreComercio })
       .eq("id", comercioAEditar.id);
