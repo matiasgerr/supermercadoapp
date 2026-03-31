@@ -1,5 +1,6 @@
+"use client";
+
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { getCategorias, supabase } from "../../hook/superbaseClient";
 import { useDeleteComercio } from "../../hook/useComercioDelete";
 import { mdiDelete, mdiPencil } from "@mdi/js";
@@ -17,8 +18,6 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
   comercios,
   setComercios,
 }) => {
-  const navigate = useNavigate();
-
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
   const [nombreNuevoLocal, setNombreNuevoLocal] = useState("");
@@ -167,7 +166,19 @@ const PanelGestion: React.FC<PanelGestionProps> = ({
   return (
     <div className="flex h-screen bg-white">
       {/* Sidebar Izquierdo */}
-      <SideBar comercios={comercios} setComercios={setComercios} />
+      <SideBar
+        categorias={categorias}
+        categoriaSeleccionada={categoriaSeleccionada}
+        comercios={comercios}
+        localSeleccionadoId={localSeleccionadoId}
+        onSeleccionarCategoria={setCategoriaSeleccionada}
+        onSeleccionarLocal={setLocalSeleccionadoId}
+        onEditarComercio={(local) => {
+          setComercioAEditar(local);
+          setNuevoNombreComercio(local.nombre);
+          setShowModaledit(true);
+        }}
+      />
 
       {/* Área Principal */}
       <div className="flex-1 p-8 overflow-y-auto">

@@ -1,9 +1,7 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import Link from "next/link";
 
 const Selector: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     /* Contenedor principal con fondo adaptativo */
     <div className="flex flex-col items-center justify-center min-h-screen p-6 transition-colors duration-300 bg-gray-50 dark:bg-zinc-950">
@@ -16,8 +14,8 @@ const Selector: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl p-auto">
         
         {/* Card de Dashboard */}
-        <button 
-          onClick={() => navigate(`/gestion`)}
+        <Link
+          href="/gestion"
           className="group relative h-48 bg-white dark:bg-zinc-900 shadow-md dark:shadow-2xl rounded-2xl 
                      transition-all duration-300 border border-gray-200 dark:border-zinc-800
                      hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-xl hover:-translate-y-1
@@ -28,27 +26,21 @@ const Selector: React.FC = () => {
             <span className="text-2xl">📋</span>
           </div>
           <span className="font-bold text-xl text-gray-800 dark:text-zinc-100">Dashboard</span>
-        </button>
+        </Link>
 
         {/* Card de Comparar */}
-        <button 
-          onClick={() => navigate(`/compararr`)}
+        <div
           className="group relative h-48 bg-white dark:bg-zinc-900 shadow-md dark:shadow-2xl rounded-2xl 
                      transition-all duration-300 border border-gray-200 dark:border-zinc-800
-                     hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xl hover:-translate-y-1
                      flex flex-col items-center justify-center gap-3
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled
-                    // className="group relative h-48 bg-white dark:bg-zinc-900 shadow-md dark:shadow-2xl rounded-2xl 
-          //            transition-all duration-300 border border-gray-200 dark:border-zinc-800
-          //            hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xl hover:-translate-y-1
-          //            flex flex-col items-center justify-center gap-3"
+                     opacity-50 cursor-not-allowed"
+          aria-disabled="true"
         >
           <div className="p-3 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
             <span className="text-2xl">📊</span>
           </div>
           <span className="font-bold text-xl text-gray-800 dark:text-zinc-100">Comparar</span>
-        </button>
+        </div>
 
       </div>
       
